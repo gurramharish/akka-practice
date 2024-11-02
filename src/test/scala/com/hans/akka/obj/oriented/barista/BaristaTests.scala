@@ -1,9 +1,11 @@
 package com.hans.akka.obj.oriented.barista
 
 import scala.collection.mutable
-import akka.actor.testkit.typed.CapturedLogEvent
+import akka.actor.testkit.typed._
 import akka.actor.testkit.typed.scaladsl._
-import com.hans.akka.obj.oriented.barista.Barista.OrderCoffee
+import com.hans.akka.coffemachine.{Akkaccino, Barista, Coffee, MochaPlay}
+import com.hans.akka.coffemachine.Barista.OrderCoffee
+import com.hans.akka.coffemachine.CoffeeMachine.CoffeeMachineCommand
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -31,6 +33,12 @@ class BaristaTests extends AnyWordSpecLike with Matchers with LogCapturing {
       val expectedLogEvent: CapturedLogEvent = TestUtils.expectedInfoLog(s"Orders:${Barista.printOrders(expectedOrders.toSet)}")
 
       allLogEntries(1) shouldBe expectedLogEvent
+    }
+
+    "spawn a child actor CoffeeMachine with as actor name 'coffee-machine'" in {
+      val testKit: BehaviorTestKit[OrderCoffee] = BehaviorTestKit(Barista())
+
+      testKit.expectEffectType[Effect.Spawned[CoffeeMachineCommand]].childName shouldBe "coffee-machine"
     }
   }
 }

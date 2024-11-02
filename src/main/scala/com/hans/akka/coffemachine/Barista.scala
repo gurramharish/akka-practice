@@ -1,8 +1,10 @@
 package com.hans.akka.coffemachine
 
 import scala.collection._
-import akka.actor.typed.Behavior
+import akka.actor.typed._
 import akka.actor.typed.scaladsl._
+import com.hans.akka.coffemachine.CoffeeMachine.CoffeeMachineCommand
+
 
 object Barista {
 
@@ -14,11 +16,16 @@ object Barista {
   class BaristaBehavior(context: ActorContext[OrderCoffee]) extends AbstractBehavior[OrderCoffee](context) {
     private val orders: mutable.Map[String, Coffee] = mutable.Map()
 
+    // spawn a coffee machine and get a reference to the coffee-machine child actor,
+    // allowing us to send messages to coffee machine
+    private val coffeeMachine: ActorRef[CoffeeMachineCommand] = context.spawn(CoffeeMachine(), "coffee-machine")
+
     override def onMessage(message: OrderCoffee): Behavior[OrderCoffee] = {
       message match {
         case OrderCoffee(whom, coffee) =>
           orders.put(whom, coffee)
           context.log.info(s"Orders:${printOrders(orders.toSet)}")
+          coffeeMachine ! CoffeeMachine.BrewCoffee(coffee)
           this
       }
     }
